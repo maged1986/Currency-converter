@@ -88,7 +88,7 @@ class DetailsFragment : Fragment() {
         binding.detailsFragDailyRv.apply {
             setHasFixedSize(true)
             layoutManager = linearLayoutManager
-          dailyAdapter=DailyAdapter()
+            dailyAdapter = DailyAdapter()
             adapter = dailyAdapter
 
         }
@@ -100,14 +100,23 @@ class DetailsFragment : Fragment() {
         viewModel.allRates.observe(viewLifecycleOwner, Observer {
             when (it.status) {
                 Status.SUCCESS -> {
-                    it.data?.rates?.forEach { (key, value) ->
-                        list.add(CurrencyRate(key, value))
-                        ratesAdapter.differ.submitList(list)
+                    if (it.data?.success!! == true) {
+                        it.data?.rates?.forEach { (key, value) ->
+                            list.add(CurrencyRate(key, value))
+                            ratesAdapter.differ.submitList(list)
+                        }
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "There is a network conncetion problem",
+                            Toast.LENGTH_LONG
+                        ).show()
+
                     }
                 }
 
                 Status.ERROR -> {
-                    Toast.makeText(requireContext(), it.message ?: "Error", Toast.LENGTH_LONG)
+                    Toast.makeText(requireContext(), it.message ?: "There is a network conncetion", Toast.LENGTH_LONG)
                         .show()
                 }
 
@@ -122,20 +131,32 @@ class DetailsFragment : Fragment() {
         viewModel.dailyRates.observe(viewLifecycleOwner, Observer {
             when (it.status) {
                 Status.SUCCESS -> {
+                    if (it.data?.size!! >= 1) {
+                        for (i in 0..it.data?.size!! - 1) {
+                            var dailyResponse = it.data.get(i)
+                            dailyResponse.rates?.forEach { (key, value) ->
+                                dailyListItems.add(DailyItem(dailyResponse.date, key, value))
+                                Log.d("TAG", "subscribeToObservers: " + key)
+                                dailyAdapter.differ.submitList(dailyListItems)
 
-                    for (i in 0..it.data?.size!! - 1) {
-                        var dailyResponse = it.data.get(i)
-                        dailyResponse.rates?.forEach { (key, value) ->
-                            dailyListItems.add(DailyItem(dailyResponse.date, key, value))
-                            Log.d("TAG", "subscribeToObservers: "+key)
-                            dailyAdapter.differ.submitList(dailyListItems)
-
+                            }
                         }
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "There is a net work conncetion problem",
+                            Toast.LENGTH_LONG
+                        ).show()
+
                     }
                 }
 
                 Status.ERROR -> {
-                    Toast.makeText(requireContext(), it.message ?: "Error", Toast.LENGTH_LONG)
+                    Toast.makeText(
+                        requireContext(),
+                        it.message ?: "here is a net work",
+                        Toast.LENGTH_LONG
+                    )
                         .show()
                 }
 
@@ -147,6 +168,7 @@ class DetailsFragment : Fragment() {
         })
 
     }
+
     //calling methods in view model and giving it the required data
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getData() {
